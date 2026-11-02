@@ -175,23 +175,35 @@ class Nibot {
   async syncInvoices(c, periods) {
     const p = this.page;
     await p.goto(`${this.base}/DongBo/${c.mst}/${c.guid}`, { waitUntil: 'domcontentloaded' });
-    await p.waitForFunction(() => typeof jQuery === 'function' && jQuery('#cboQuy').data('dxSelectBox'));
+    // Các máy chủ Nibot (nibot2/3/7…) chạy phiên bản giao diện khác nhau: ô "Khoảng thời gian" có thể là
+    // dxSelectBox (bản cũ) hoặc dxDropDownBox (bản mới). Ô Từ ngày/Đến ngày thì bản nào cũng có, nên chờ ô đó.
+    await p.waitForFunction(() => typeof jQuery === 'function' && jQuery('#dtTuNgay').data('dxDateBox') && jQuery('#dtDenNgay').data('dxDateBox'));
     await this.assertCompany(c);
     const { cboValue, year, invoice } = periods;
-    let shown = await p.evaluate(({ cboValue, year }) => {
-      jQuery('#cboQuy').dxSelectBox('instance').option('value', cboValue);
+    const ui = await p.evaluate(({ cboValue, year }) => {
+      const info = { cbo: 'không có' };
+      const cbo = jQuery('#cboQuy').data('dxSelectBox') || jQuery('#cboQuy').data('dxDropDownBox');
+      if (cbo) {
+        info.cbo = jQuery('#cboQuy').data('dxSelectBox') ? 'dxSelectBox' : 'dxDropDownBox';
+        try { cbo.option('value', cboValue); } catch (e) { info.cboError = e.message; }
+      }
       const nam = jQuery('#txtNam').data('dxNumberBox');
       if (nam) nam.option('value', year);
-      return { from: jQuery('#dtTuNgay input.dx-texteditor-input').val(), to: jQuery('#dtDenNgay input.dx-texteditor-input').val() };
+      // Bản mới có thêm "Loại HĐ": luôn lấy cả HĐ thông thường và HĐ máy tính tiền (MTT).
+      for (const id of ['chkHdThongThuong', 'chkHdMTT']) {
+        const chk = jQuery('#' + id).data('dxCheckBox');
+        if (chk && chk.option('value') !== true) chk.option('value', true);
+        if (chk) info[id] = chk.option('value');
+      }
+      return info;
     }, { cboValue, year });
-    if (shown.from !== invoice.fromText || shown.to !== invoice.toText) {
-      shown = await this.setDates('', 'dtTuNgay', 'dtDenNgay', invoice.from, invoice.to);
-    }
+    // Luôn đặt lại Từ ngày/Đến ngày đúng kỳ rồi đọc lại (không phụ thuộc ô Khoảng thời gian tự điền).
+    const shown = await this.setDates('', 'dtTuNgay', 'dtDenNgay', invoice.from, invoice.to);
     if (shown.from !== invoice.fromText || shown.to !== invoice.toText) {
       throw new Error(`Không đặt được kỳ hóa đơn (đang là ${shown.from}–${shown.to})`);
     }
     this.checkStop();
-    this.log(`  Hóa đơn: gửi đồng bộ VÀO/RA ${shown.from}–${shown.to}`);
+    this.log(`  Hóa đơn: gửi đồng bộ VÀO/RA ${shown.from}–${shown.to} (ô kỳ: ${ui.cbo}${ui.chkHdMTT !== undefined ? ', HĐ thường + MTT' : ''})`);
     await p.locator('#btnGov').click();
 
     const t0 = Date.now();
@@ -201,22 +213,24 @@ class Nibot {
       status = (await p.locator('#lblTrangThai').innerText().catch(() => '')).trim();
       if (/xong|lỗi|thất bại|không thành công/i.test(status)) break;
     }
-    const panel = await p.evaluate(() => {
-      let e = document.querySelector('#lblTrangThai');
-      while (e && !/Từ ngày/.test(e.innerText)) e = e.parentElement;
-      return e ? e.innerText : '';
-    });
-    const num = (re) => { const m = panel.match(re); return m ? Number(m[1].replace(/[.,]/g, '')) : null; };
+    // Đọc kết quả từ toàn trang (ô ngày là input nên không lẫn vào chữ); định dạng mỗi bản Nibot hơi khác.
+    const page = (await p.evaluate(() => document.body.innerText)).normalize('NFC');
+    const after = await p.evaluate(() => ({ from: jQuery('#dtTuNgay input.dx-texteditor-input').val(), to: jQuery('#dtDenNgay input.dx-texteditor-input').val() }));
+    const num = (re) => { const m = page.match(re); return m ? Number(m[1].replace(/[.,]/g, '')) : null; };
     const res = {
       status,
-      buy: num(/([\d.,]+)\s*ho[aá]\s*đơn mua vào/i),
-      sell: num(/([\d.,]+)\s*ho[aá]\s*đơn bán ra/i),
-      total: num(/Tổng số HĐ:\s*([\d.,]+)/i),
-      rangeOk: panel.includes(`${invoice.fromText} đến ngày ${invoice.toText}`),
+      buy: num(/([\d.,]+)\s*ho[aá]\s*đơn\s*mua vào/i),
+      sell: num(/([\d.,]+)\s*ho[aá]\s*đơn\s*bán ra/i),
+      total: num(/Tổng số H[ĐD][^:\d]*:\s*([\d.,]+)/i),
+      // Kỳ thực sự xử lý: dòng kết quả "Từ ngày … đến ngày …" nếu có, nếu không thì ô ngày vẫn giữ đúng kỳ sau khi chạy.
+      rangeOk: page.includes(`${invoice.fromText} đến ngày ${invoice.toText}`) || (after.from === invoice.fromText && after.to === invoice.toText),
     };
-    const done = /đồng bộ xong/i.test(status) && /Đồng bộ hóa đơn:\s*xong/i.test(panel) && res.rangeOk;
-    if (done) return { state: 'hoan_tat', ...res, evidence: `Đồng bộ xong ${invoice.fromText}–${invoice.toText}: ${res.buy ?? '?'} mua vào, ${res.sell ?? '?'} bán ra, tổng ${res.total ?? '?'}` };
-    if (/lỗi|thất bại|không thành công/i.test(status)) return { state: 'loi', ...res, evidence: panel.slice(0, 500) };
+    const resultLines = page.slice(Math.max(0, page.indexOf('Trạng thái'))).split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 12).join(' | ');
+    if (/lỗi|thất bại|không thành công/i.test(status)) return { state: 'loi', ...res, evidence: resultLines.slice(0, 500) };
+    if (/xong/i.test(status) && res.rangeOk) {
+      return { state: 'hoan_tat', ...res, evidence: `Đồng bộ xong ${invoice.fromText}–${invoice.toText}: ${res.buy ?? '?'} mua vào, ${res.sell ?? '?'} bán ra, tổng ${res.total ?? '?'}` };
+    }
+    if (/xong/i.test(status)) return { state: 'chua_xac_minh', ...res, evidence: 'Báo xong nhưng không xác nhận được kỳ đã chạy: ' + resultLines.slice(0, 400) };
     return { state: 'chua_xac_minh', ...res, evidence: 'Hết 10 phút chưa thấy kết quả cuối. Trạng thái: ' + status };
   }
 

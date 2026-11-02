@@ -1,7 +1,7 @@
 {
   "name": "nibot-dong-bo",
   "productName": "Nibot Đồng Bộ",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Tự động đồng bộ hóa đơn, hàng hóa, ĐTPN trên Nibot",
   "main": "src/main.js",
   "scripts": {
