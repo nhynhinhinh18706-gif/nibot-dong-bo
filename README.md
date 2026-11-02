@@ -1,9 +1,31 @@
 # Nibot Đồng Bộ
 
 Ứng dụng desktop (Electron + Playwright) tự đồng bộ trên Nibot cho các doanh nghiệp được chọn:
-hóa đơn VÀO/RA trọn quý → hàng hóa → ĐTPN đầu vào → ĐTPN đầu ra.
+hóa đơn VÀO/RA trọn quý hoặc trọn tháng → hàng hóa → ĐTPN đầu vào → ĐTPN đầu ra.
 
-## Chạy
+## ⬇️ Tải về
+
+**[Tải bản mới nhất](https://github.com/nhynhinhinh18706-gif/nibot-dong-bo/releases/latest)** — mở link, kéo xuống mục *Assets* và chọn:
+
+| Máy | File |
+|---|---|
+| Windows (khuyên dùng, **tự cập nhật**) | `Nibot-Dong-Bo-Setup-<phiên bản>.exe` |
+| Windows (không cần cài) | `Nibot-Dong-Bo-Portable-<phiên bản>.exe` |
+| Mac chip M1/M2/M3/M4 | `Nibot-Dong-Bo-<phiên bản>-arm64.dmg` |
+| Mac chip Intel | `Nibot-Dong-Bo-<phiên bản>-x64.dmg` |
+
+Yêu cầu: Windows 10/11 64-bit hoặc macOS 10.15+, **đã cài Google Chrome** (hoặc Edge).
+App chưa ký số: Windows bấm *More info → Run anyway*; Mac chuột phải vào app → *Open*.
+
+## Lịch sử phiên bản
+
+- **1.2.2** — Sửa lỗi đồng bộ hóa đơn khi Nibot chuyển tài khoản sang máy chủ giao diện mới (nibot3/nibot7/nangdong.online): ô "Khoảng thời gian" đổi kiểu nên bản cũ treo rồi báo lỗi. Luôn lấy cả HĐ thông thường và HĐ máy tính tiền (MTT). Đã chạy thật Tháng 10/2026: 4/4 việc hoàn tất.
+- **1.2.1** — Sửa build Windows trên GitHub Actions; bản đầu tiên có đủ .exe + .dmg trên Releases.
+- **1.2.0** — Tự cập nhật qua GitHub Releases; nút *Kiểm tra máy* và *Xuất nhật ký lỗi*; tự tìm Chrome/Edge; chờ lâu hơn cho máy chậm.
+- **1.1.0** — Chọn kỳ theo tháng (Tháng 1–12) ngoài theo quý.
+- **1.0.0** — Bản đầu: chọn doanh nghiệp + quý, đồng bộ hóa đơn, hàng hóa, ĐTPN vào/ra, báo cáo từng lần chạy.
+
+## Chạy từ mã nguồn
 
 ```bash
 npm install
