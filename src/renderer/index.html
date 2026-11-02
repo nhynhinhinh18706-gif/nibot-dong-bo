@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>Nibot Đồng Bộ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="logo">N</span> Nibot Đồng Bộ <span id="appVersion" class="ver"></span></div>
+    <div class="head-actions">
+      <button id="btnUpdate" class="ghost" title="Kiểm tra bản mới">⟳ Cập nhật</button>
+      <button id="btnDiag" class="ghost" title="Kiểm tra máy có chạy được app không">🩺 Kiểm tra máy</button>
+      <button id="btnExportLogs" class="ghost" title="Lưu nhật ký lỗi ra thư mục Tải về để gửi hỗ trợ">📄 Xuất nhật ký lỗi</button>
+      <button id="btnSettings" class="ghost" title="Cài đặt">⚙ Cài đặt</button>
+    </div>
+  </header>
+  <div id="updateBar" class="update-bar" hidden>
+    <span id="updateText"></span>
+    <button id="btnUpdateAction" class="primary small" hidden></button>
+  </div>
+
+  <main>
+    <section class="controls">
+      <button id="btnCompanies" class="pick">
+        <span class="pick-label">Doanh nghiệp</span>
+        <span id="companiesText" class="pick-value">Chọn doanh nghiệp…</span>
+      </button>
+      <button id="btnQuarter" class="pick">
+        <span class="pick-label">Kỳ hóa đơn</span>
+        <span id="quarterText" class="pick-value">Chọn kỳ…</span>
+      </button>
+      <div class="actions">
+        <button id="btnStart" class="primary" disabled>▶ Bắt đầu đồng bộ</button>
+        <button id="btnStop" class="danger" hidden>■ Dừng</button>
+      </div>
+    </section>
+    <p id="periodHint" class="hint"></p>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Tiến độ</h2>
+        <button id="btnOpenRuns" class="ghost small">Mở thư mục báo cáo</button>
+      </div>
+      <div class="table-wrap">
+        <table id="results">
+          <thead><tr><th>Doanh nghiệp</th><th>MST</th><th>Hóa đơn</th><th>Mua/Bán</th><th>Hàng hóa</th><th>ĐTPN vào</th><th>ĐTPN ra</th></tr></thead>
+          <tbody><tr class="empty"><td colspan="7">Chưa có đợt chạy nào.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Nhật ký</h2></div>
+      <pre id="log"></pre>
+    </section>
+  </main>
+
+  <!-- Hộp chọn doanh nghiệp -->
+  <dialog id="dlgCompanies">
+    <form method="dialog">
+      <h3>Chọn doanh nghiệp</h3>
+      <div class="row">
+        <input id="companySearch" type="search" placeholder="Tìm theo tên hoặc MST…">
+        <button type="button" id="btnReload" class="ghost small">↻ Tải lại</button>
+      </div>
+      <label class="check all"><input type="checkbox" id="chkAll"> Chọn tất cả</label>
+      <div id="companyList" class="list"><p class="muted">Bấm “Tải lại” để đăng nhập Nibot và lấy danh sách.</p></div>
+      <footer>
+        <span id="companyCount" class="muted"></span>
+        <button value="cancel" class="ghost">Hủy</button>
+        <button id="btnCompaniesOk" value="ok" class="primary">Xong</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Hộp chọn kỳ: quý hoặc tháng -->
+  <dialog id="dlgQuarter">
+    <form method="dialog">
+      <h3>Chọn kỳ hóa đơn</h3>
+      <div class="seg" role="tablist">
+        <button type="button" data-kind="quy" role="tab">Theo quý</button>
+        <button type="button" data-kind="thang" role="tab">Theo tháng</button>
+      </div>
+      <div class="quarters" data-for="quy">
+        <button type="button" data-n="1">Quý 1<small>01/01 – 31/03</small></button>
+        <button type="button" data-n="2">Quý 2<small>01/04 – 30/06</small></button>
+        <button type="button" data-n="3">Quý 3<small>01/07 – 30/09</small></button>
+        <button type="button" data-n="4">Quý 4<small>01/10 – 31/12</small></button>
+      </div>
+      <div class="quarters months" data-for="thang">
+        <button type="button" data-n="1">Tháng 1</button>
+        <button type="button" data-n="2">Tháng 2</button>
+        <button type="button" data-n="3">Tháng 3</button>
+        <button type="button" data-n="4">Tháng 4</button>
+        <button type="button" data-n="5">Tháng 5</button>
+        <button type="button" data-n="6">Tháng 6</button>
+        <button type="button" data-n="7">Tháng 7</button>
+        <button type="button" data-n="8">Tháng 8</button>
+        <button type="button" data-n="9">Tháng 9</button>
+        <button type="button" data-n="10">Tháng 10</button>
+        <button type="button" data-n="11">Tháng 11</button>
+        <button type="button" data-n="12">Tháng 12</button>
+      </div>
+      <label class="field">Năm <input id="yearInput" type="number" min="2020" step="1"></label>
+      <footer>
+        <button value="cancel" class="ghost">Hủy</button>
+        <button id="btnQuarterOk" value="ok" class="primary">Xong</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Cài đặt -->
+  <dialog id="dlgSettings">
+    <form method="dialog">
+      <h3>Cài đặt</h3>
+      <fieldset>
+        <legend>Tài khoản Nibot (người dùng con)</legend>
+        <label class="field">GUID hoặc Master User <input id="sGuid" autocomplete="off"></label>
+        <label class="field">Username <input id="sUser" autocomplete="off"></label>
+        <label class="field">Mật khẩu <input id="sPass" type="password" autocomplete="new-password" placeholder="(để trống nếu không đổi)"></label>
+        <p class="muted small">Mật khẩu được mã hóa bằng kho bảo mật của Windows/macOS, chỉ lưu trên máy này.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Trình duyệt</legend>
+        <label class="check"><input type="checkbox" id="sHeadless"> Chạy ẩn trình duyệt (không hiện cửa sổ Chrome)</label>
+        <label class="field">Đường dẫn Chrome/Edge (chỉ cần khi app không tự tìm thấy)
+          <input id="sBrowser" autocomplete="off" placeholder="vd: C:\Program Files\Google\Chrome\Application\chrome.exe"></label>
+      </fieldset>
+      <footer>
+        <button value="cancel" class="ghost">Hủy</button>
+        <button id="btnSettingsSave" value="ok" class="primary">Lưu</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

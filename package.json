@@ -1,0 +1,66 @@
+{
+  "name": "nibot-dong-bo",
+  "productName": "Nibot Đồng Bộ",
+  "version": "1.2.0",
+  "description": "Tự động đồng bộ hóa đơn, hàng hóa, ĐTPN trên Nibot",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js",
+    "dist:win": "electron-builder --win nsis portable --x64 -c.electronDist=node_modules/electron/dist",
+    "dist:mac": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg zip --x64 --arm64"
+  },
+  "dependencies": {
+    "electron-updater": "6.3.9",
+    "playwright-core": "1.48.2"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "vn.nangdong.nibot-dongbo",
+    "productName": "Nibot Dong Bo",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Nibot-Dong-Bo-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Nibot-Dong-Bo-Portable-${version}.${ext}"
+    },
+    "dmg": {
+      "artifactName": "Nibot-Dong-Bo-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.business"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "nhynhinhinh18706-gif",
+        "repo": "nibot-dong-bo",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nhynhinhinh18706-gif/nibot-dong-bo.git"
+  }
+}
