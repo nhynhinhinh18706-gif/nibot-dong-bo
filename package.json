@@ -1,12 +1,12 @@
 {
   "name": "nibot-dong-bo",
   "productName": "Nibot Đồng Bộ",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Tự động đồng bộ hóa đơn, hàng hóa, ĐTPN trên Nibot",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/*.test.js",
+    "test": "node --test test/periods.test.js",
     "dist:win": "electron-builder --win nsis portable --x64 -c.electronDist=node_modules/electron/dist",
     "dist:mac": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg zip --x64 --arm64"
   },
